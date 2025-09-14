@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        
+        body {
+            background: #000;
+            color: #0f0;
+            line-height: 1.6;
+            overflow: hidden;
+            height: 100vh;
+            cursor: none;
+        }
+        
+        .notepad-container {
+            width: 100%;
+            height: 100vh;
+            padding: 20px;
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .cursor {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background-color: #0f0;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .shutdown-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #fff;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            font-family: Arial, sans-serif;
+        }
+        
+        .shutdown-text {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            width: 300px;
+            height: 20px;
+            background: #222;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #0078d7;
+            transition: width 0.5s ease;
+        }
+        
+        .loader {
+            border: 5px solid #333;
+            border-top: 5px solid #0078d7;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .blink {
+            animation: text-blink 1s infinite;
+        }
+        
+        @keyframes text-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .fake-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #2d2d2d;
+            padding: 5px;
+            display: flex;
+            font-size: 14px;
+        }
+        
+        .menu-item {
+            margin-right: 15px;
+            color: #ccc;
+            cursor: default;
+        }
+        
+        .title {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ccc;
+        }
+        
+        .message {
+            margin-top: 30px;
+            color: #ff4444;
+            text-align: center;
+            font-size: 18px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="fake-menu">
+        <div class="menu-item">File</div>
+        <div class="menu-item">Edit</div>
+        <div class="menu-item">Format</div>
+        <div class="menu-item">View</div>
+        <div class="menu-item">Help</div>
+        <div class="title">Untitled - Notepad</div>
+    </div>
+    
+    <div class="notepad-container" id="notepad">
+        <div id="content"></div>
+        <div class="cursor" id="cursor"></div>
+    </div>
+    
+    <div class="message" id="message">
+        Just kidding! Websites can't actually shut down your computer.<br>
+        This is a harmless simulation. 😊
+    </div>
+    
+    <div class="shutdown-screen" id="shutdownScreen">
+        <div class="shutdown-text">Windows is shutting down...</div>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="shutdown-text">Please do not turn off your computer.</div>
+        <div class="loader"></div>
+        <div class="shutdown-text blink">Complete</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const content = document.getElementById('content');
+            const cursor = document.getElementById('cursor');
+            const shutdownScreen = document.getElementById('shutdownScreen');
+            const progress = document.getElementById('progress');
+            const message = document.getElementById('message');
+            
+            // Initial text in the notepad
+            const initialText = "Welcome to my notepad!\n\nThis is a secure note-taking application.\n\n- Click anywhere to begin typing\n- Press ESC to cancel\n\nImportant: This notepad is completely safe to use.\n\n";
+            
+            // Type out the initial text
+            typeText(initialText, 0, function() {
+                // After typing is done, position cursor at end
+                positionCursor();
+                
+                // Make the notepad clickable to trigger the "shutdown"
+                document.getElementById('notepad').addEventListener('click', function() {
+                    startShutdownSequence();
+                });
+            });
+            
+            // Type text with a typewriter effect
+            function typeText(text, index, callback) {
+                if (index < text.length) {
+                    content.innerHTML += text.charAt(index);
+                    positionCursor();
+                    setTimeout(function() {
+                        typeText(text, index + 1, callback);
+                    }, 50);
+                } else {
+                    callback();
+                }
+            }
+            
+            // Position the cursor at the end of the text
+            function positionCursor() {
+                const text = content.innerHTML;
+                const textLines = text.split('\n');
+                const lastLine = textLines[textLines.length - 1];
+                
+                // Create a temporary element to measure text width
+                const tempElement = document.createElement('span');
+                tempElement.innerHTML = lastLine;
+                tempElement.style.visibility = 'hidden';
+                tempElement.style.position = 'absolute';
+                tempElement.style.whiteSpace = 'pre';
+                document.body.appendChild(tempElement);
+                
+                const textWidth = tempElement.offsetWidth;
+                const lineHeight = 22;
+                const topPos = (textLines.length - 1) * lineHeight;
+                
+                document.body.removeChild(tempElement);
+                
+                cursor.style.left = (20 + textWidth) + 'px';
+                cursor.style.top = (40 + topPos) + 'px';
+            }
+            
+            // Start the fake shutdown sequence
+            function startShutdownSequence() {
+                // Show shutdown screen
+                shutdownScreen.style.display = 'flex';
+                
+                // Animate progress bar
+                let width = 0;
+                const interval = setInterval(function() {
+                    width += 5;
+                    progress.style.width = width + '%';
+                    
+                    if (width >= 100) {
+                        clearInterval(interval);
+                        setTimeout(function() {
+                            document.body.style.backgroundColor = '#000';
+                            shutdownScreen.style.display = 'none';
+                            message.style.display = 'block';
+                        }, 1000);
+                    }
+                }, 100);
+            }
+            
+            // Allow user to escape with ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    shutdownScreen.style.display = 'none';
+                    message.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
